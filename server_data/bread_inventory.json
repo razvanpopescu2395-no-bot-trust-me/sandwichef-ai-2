@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-22",
+  "dailyTarget": 12,
+  "totalPhysicalSold": 0,
+  "totalOnlineSold": 0,
+  "remaining": 12,
+  "isSoldOut": false,
+  "lastUpdated": "2026-10-22T06:54:00.000Z",
+  "logs": [
+    {
+      "id": "init-panini-12",
+      "timestamp": "2026-10-22T06:54:00.000Z",
+      "timeFormatted": "09:54:00",
+      "type": "reset",
+      "quantity": 12,
+      "note": "Inițializare lot zilnic (12 panini Schiacciata coapte)",
+      "seller": "Sistem brutărie"
+    }
+  ]
+}
