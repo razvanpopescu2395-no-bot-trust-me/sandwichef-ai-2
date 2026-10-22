@@ -97,13 +97,42 @@ export function setCachedInventory(state: BreadInventoryState): void {
 export async function fetchInventory(): Promise<BreadInventoryState> {
   try {
     const res = await fetch('/api/inventory');
-    if (!res.ok) throw new Error('Network error');
-    const data: BreadInventoryState = await res.json();
-    setCachedInventory(data);
-    return data;
+    if (res.ok) {
+      const data: BreadInventoryState = await res.json();
+      if (data && typeof data === 'object' && typeof data.remaining === 'number') {
+        setCachedInventory(data);
+        return data;
+      }
+    }
   } catch (err) {
-    return getCachedInventory();
+    // Attempt direct Upstash cloud read
   }
+
+  try {
+    const upstashRes = await fetch(
+      'https://awake-unicorn-124669.upstash.io/get/sandwichef_bread_inventory',
+      {
+        headers: {
+          Authorization: 'Bearer gQAAAAAAAeb9AAIgcDFkOTJlMjYwMjBiYzE0ZmVkYTY4NzgwYjkwZjcyODY4Mg',
+        },
+      }
+    );
+    if (upstashRes.ok) {
+      const json = await upstashRes.json();
+      if (json && json.result) {
+        const parsed =
+          typeof json.result === 'string' ? JSON.parse(json.result) : json.result;
+        if (parsed && typeof parsed === 'object' && typeof parsed.remaining === 'number') {
+          setCachedInventory(parsed);
+          return parsed;
+        }
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  return getCachedInventory();
 }
 
 export async function recordPhysicalSale(
@@ -364,6 +393,21 @@ export async function setRemainingBreadStock(
       note: `${note} (offline)`,
     });
     setCachedInventory(current);
+
+    // Direct Upstash cloud sync fallback
+    try {
+      fetch('https://awake-unicorn-124669.upstash.io/set/sandwichef_bread_inventory', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer gQAAAAAAAeb9AAIgcDFkOTJlMjYwMjBiYzE0ZmVkYTY4NzgwYjkwZjcyODY4Mg',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(current),
+      }).catch(() => {});
+    } catch (e) {
+      // ignore
+    }
+
     return { success: true, state: current };
   }
 }
