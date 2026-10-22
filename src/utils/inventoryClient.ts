@@ -312,11 +312,21 @@ export async function setRemainingBreadStock(
       : `Înștiințat pe site că mai sunt ${remaining} bucăți`);
 
   try {
-    const res = await fetch('/api/inventory/set-stock', {
+    let res = await fetch('/api/inventory/set-stock', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ remaining, seller, note }),
     });
+
+    if (!res.ok) {
+      // Fallback to /api/inventory endpoint
+      res = await fetch('/api/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set-stock', remaining, seller, note }),
+      });
+    }
+
     const data = await res.json();
     if (!res.ok) {
       return { success: false, error: data.error || 'Eroare la actualizarea stocului pe site.' };
